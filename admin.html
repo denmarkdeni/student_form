@@ -41,6 +41,7 @@
                 <th>Occupation</th>
                 <th>Location</th>
                 <th>Education</th>
+                <th>Enquiry Date</th>
                 <th>Referral</th>
                 <th>Status</th>
             </tr>
@@ -107,6 +108,7 @@
                         <td>${student.occupation}</td>
                         <td>${student.location}</td>
                         <td>${student.education}</td>
+                        <td>${new Date(student.created_at).toLocaleDateString('en-GB')}</td>
                         <td>${student.referral}</td>
                         <td>
                             <select onchange="updateStatus(${student.id}, this.value)">
