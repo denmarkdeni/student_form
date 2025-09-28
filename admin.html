@@ -6,15 +6,17 @@
     <title>Admin Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; }
-        h1 { color: #f28c38; }
+        body { font-family: Arial, sans-serif;  margin: 20px auto; padding: 20px; background-color: #fff3e0; }
+        h1 { color: #f28c38; text-align: center; }
+        #loginSection { display: flex; justify-content: center; }
         #loginForm { display: flex; flex-direction: column; gap: 10px; max-width: 300px; }
         #dataTable { display: none; width: 100%; border-collapse: collapse; margin-top: 20px; }
         #dataTable th, #dataTable td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         #dataTable th { background-color: #f28c38; color: white; }
-        #message { margin-top: 10px; color: green; }
+        #dataTable select { padding: 5px; border-radius: 5px; border: 1px solid #f28c38; }
+        #message { margin-top: 10px; color: green; text-align: center; }
         .error { color: red; }
-        input, button { padding: 10px; font-size: 16px; }
+        input, button { padding: 10px; font-size: 16px; border-radius: 5px; }
         button { background-color: #f28c38; color: white; border: none; cursor: pointer; }
         button:hover { background-color: #e07b30; }
     </style>
@@ -32,6 +34,7 @@
     <table id="dataTable">
         <thead>
             <tr>
+                <th>Id</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Phone</th>
@@ -39,6 +42,7 @@
                 <th>Location</th>
                 <th>Education</th>
                 <th>Referral</th>
+                <th>Status</th>
             </tr>
         </thead>
         <tbody id="studentData"></tbody>
@@ -87,7 +91,8 @@
             try {
                 const { data, error } = await supabase
                     .from('students')
-                    .select('*');
+                    .select('*')
+                    .order('id', { ascending: false });
                 if (error) throw error;
 
                 const tbody = document.getElementById('studentData');
@@ -95,6 +100,7 @@
                 data.forEach(student => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
+                        <td>${student.id}</td>
                         <td>${student.name}</td>
                         <td>${student.email}</td>
                         <td>${student.phone}</td>
@@ -102,9 +108,32 @@
                         <td>${student.location}</td>
                         <td>${student.education}</td>
                         <td>${student.referral}</td>
+                        <td>
+                            <select onchange="updateStatus(${student.id}, this.value)">
+                                <option value="Pending" ${student.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                <option value="Called" ${student.status === 'Called' ? 'selected' : ''}>Called</option>
+                                <option value="Accepted" ${student.status === 'Accepted' ? 'selected' : ''}>Accepted</option>
+                                <option value="Cancelled" ${student.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                            </select>
+                        </td>
                     `;
                     tbody.appendChild(row);
                 });
+            } catch (error) {
+                document.getElementById('message').textContent = 'Error: ' + error.message;
+                document.getElementById('message').classList.add('error');
+            }
+        }
+
+        // Update student status
+        async function updateStatus(studentId, newStatus) {
+            try {
+                const { error } = await supabase
+                    .from('students')
+                    .update({ status: newStatus })
+                    .eq('id', studentId);
+                if (error) throw error;
+                document.getElementById('message').textContent = 'Status updated successfully!';
             } catch (error) {
                 document.getElementById('message').textContent = 'Error: ' + error.message;
                 document.getElementById('message').classList.add('error');
