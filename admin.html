@@ -43,6 +43,7 @@
                 <th>Education</th>
                 <th>Enquiry Date</th>
                 <th>Referral</th>
+                <th>Info</th>
                 <th>Status</th>
             </tr>
         </thead>
@@ -110,6 +111,7 @@
                         <td>${student.education}</td>
                         <td>${new Date(student.created_at).toLocaleDateString('en-GB')}</td>
                         <td>${student.referral}</td>
+                        <td>${student.info}</td>
                         <td>
                             <select onchange="updateStatus(${student.id}, this.value)">
                                 <option value="Pending" ${student.status === 'Pending' ? 'selected' : ''}>Pending</option>

@@ -115,6 +115,12 @@
             <option value="Company Staff Referred">Company Staff Referred</option>
             <option value="Social Media">Social Media</option>
         </select>
+        <select id="info">
+            <option value="" disabled selected>Which option is suitable for you?</option>
+            <option value="New to Login360">New to Login360</option>
+            <option value="Currently studying at Login360">Currently studying at Login360</option>
+            <option value="Former student of Login360">Former student of Login360</option>
+        </select>
         <button type="submit">Submit</button>
     </form>
     <p id="message"></p>
@@ -143,6 +149,7 @@
                 location: document.getElementById('location').value,
                 education: document.getElementById('education').value,
                 referral: document.getElementById('referral').value,
+                info: document.getElementById('info').value,
                 status: 'Pending'
             };
 
