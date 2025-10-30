@@ -17,6 +17,10 @@
             color: #f28c38;
             font-size: 2.5em;
         }
+        h2{
+            color: #f28c38;
+            font-size: 2.1em;
+        }
         p {
             font-size: 1.2em;
             margin: 20px 0;
@@ -33,11 +37,22 @@
         a:hover {
             background-color: #e07b30;
         }
+        #click{
+            animation: click 1s infinite ease;
+        }
+        @keyframes click{
+            0%{}
+            50%{transform: translateY(20px)}
+            100%{transform: translateY(0)}
+        }
     </style>
 </head>
 <body>
     <h1>Welcome to Login360!</h1>
     <p>Thank you for registering! We're excited to have you on board.</p>
-    <p><a href="https://drive.google.com/file/d/1qVh1IfcfzxGkpe7ZkKLg6HwmxOcn8n2P/view?usp=sharing">Demo class link (data analytics)</a></p>
+    <h2>Demo class links</h2>
+    <h1 id="click">⬇</h1>
+    <p><a href="https://drive.google.com/file/d/1qVh1IfcfzxGkpe7ZkKLg6HwmxOcn8n2P/view?usp=sharing">Click here for Data Analytics</a></p>
+    <p><a href="https://drive.google.com/file/d/1u2iciL5mWfhYrM_e-jyGvAGeDVB4zjkb/view?usp=sharing">Click here for Python</a></p>
 </body>
 </html>
