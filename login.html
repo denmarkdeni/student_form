@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #fff3e0 0%, #efd1a2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .login-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .login-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #f28c38 0%, #ed8129 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .input-group {
+            position: relative;
+        }
+        input[type="email"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input[type="email"]:focus {
+            outline: none;
+            border-color: #ed8129;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #f28c38 0%, #f07e20 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px #ed8129;
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        #message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+        #message.show {
+            display: block;
+        }
+        #message.error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef5350;
+        }
+        #message.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #66bb6a;
+        }
+        .links {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .links a {
+            color: #f28c38;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+        .links a:hover {
+            color: #e07b30;
+        }
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ffffff;
+            border-top: 3px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-icon">👤</div>
+        <h1>Student Login</h1>
+        <p class="subtitle">Enter your registered email to continue</p>
+        
+        <form id="loginForm">
+            <div class="input-group">
+                <input 
+                    type="email" 
+                    id="studentEmail" 
+                    placeholder="Enter your email address" 
+                    required
+                    autocomplete="email"
+                >
+            </div>
+            <button type="submit" id="loginBtn">
+                <span id="btnText">Login</span>
+                <div class="loading-spinner" id="spinner"></div>
+            </button>
+        </form>
+        
+        <p id="message"></p>
+        
+        <div class="links">
+            <p>Don't have an account? <a href="index.html">Register here</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Supabase client
+        const supabaseUrl = 'https://zpcclnqduunsboxeteqs.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwY2NsbnFkdXVuc2JveGV0ZXFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxODExNTcsImV4cCI6MjA3Mzc1NzE1N30.O57PRkwfpZvNTcBOmYna7szFL4NZzBgjCdIY1ruAkf8';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // Form submission
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const messageEl = document.getElementById('message');
+            const loginBtn = document.getElementById('loginBtn');
+            const btnText = document.getElementById('btnText');
+            const spinner = document.getElementById('spinner');
+            const emailInput = document.getElementById('studentEmail');
+            
+            // Clear previous messages
+            messageEl.textContent = '';
+            messageEl.className = '';
+            
+            // Show loading state
+            loginBtn.disabled = true;
+            btnText.style.display = 'none';
+            spinner.style.display = 'block';
+
+            const email = emailInput.value.trim();
+
+            try {
+                // Check if email exists in the database
+                const { data, error } = await supabase
+                    .from('students')
+                    .select('email, name')
+                    .eq('email', email)
+                    .limit(1);
+
+                if (error) throw error;
+
+                // Check if user exists
+                if (data && data.length > 0) {
+                    // User found - show success message
+                    messageEl.textContent = `Welcome back, ${data[0].name}! Redirecting...`;
+                    messageEl.classList.add('success', 'show');
+                    
+                    // Store email in sessionStorage for welcome page
+                    sessionStorage.setItem('studentEmail', email);
+                    sessionStorage.setItem('studentName', data[0].name);
+                    
+                    // Redirect after short delay
+                    setTimeout(() => {
+                        window.location.href = 'welcome.html';
+                    }, 1500);
+                } else {
+                    // User not found
+                    messageEl.textContent = 'This email is not registered. Please register first.';
+                    messageEl.classList.add('error', 'show');
+                    
+                    // Reset button state
+                    loginBtn.disabled = false;
+                    btnText.style.display = 'block';
+                    spinner.style.display = 'none';
+                }
+
+            } catch (error) {
+                messageEl.textContent = 'Error: ' + error.message;
+                messageEl.classList.add('error', 'show');
+                
+                // Reset button state
+                loginBtn.disabled = false;
+                btnText.style.display = 'block';
+                spinner.style.display = 'none';
+            }
+        });
+
+        // Clear error message when user starts typing
+        document.getElementById('studentEmail').addEventListener('input', () => {
+            const messageEl = document.getElementById('message');
+            messageEl.classList.remove('show');
+        });
+    </script>
+</body>
+</html>

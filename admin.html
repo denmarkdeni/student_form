@@ -6,23 +6,78 @@
     <title>Admin Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: Arial, sans-serif;  margin: 20px auto; padding: 20px; background-color: #fff3e0; }
+        body { font-family: Arial, sans-serif; margin: 20px auto; padding: 20px; background-color: #fff3e0; }
         h1 { color: #f28c38; text-align: center; }
         #loginSection { display: flex; justify-content: center; }
         #loginForm { display: flex; flex-direction: column; gap: 10px; max-width: 300px; }
-        #dataTable { display: none; width: 100%; border-collapse: collapse; margin-top: 20px; }
+        #dashboardSection { display: none; }
+        
+        /* Search section styling */
+        #searchSection {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .search-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        #searchColumn, #searchValue {
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #f28c38;
+        }
+        #searchColumn {
+            min-width: 150px;
+        }
+        #searchValue {
+            min-width: 200px;
+        }
+        #filterBtn, #resetBtn, #logoutBtn {
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            background-color: #f28c38;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #filterBtn:hover, #logoutBtn:hover {
+            background-color: #e07b30;
+        }
+        #resetBtn {
+            background-color: #888;
+        }
+        #resetBtn:hover {
+            background-color: #666;
+        }
+        
+        #dataTable { width: 100%; border-collapse: collapse; margin-top: 20px; overflow-x: auto; display: block; }
         #dataTable th, #dataTable td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        #dataTable th { background-color: #f28c38; color: white; }
+        #dataTable th { background-color: #f28c38; color: white; position: sticky; top: 0; }
         #dataTable select { padding: 5px; border-radius: 5px; border: 1px solid #f28c38; }
         #message { margin-top: 10px; color: green; text-align: center; }
         .error { color: red; }
+        .info { color: #2196F3; }
         input, button { padding: 10px; font-size: 16px; border-radius: 5px; }
         button { background-color: #f28c38; color: white; border: none; cursor: pointer; }
         button:hover { background-color: #e07b30; }
+        /*#logoutBtn {
+            float: right;
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }*/
     </style>
 </head>
 <body>
     <h1>Admin Dashboard</h1>
+    
     <div id="loginSection">
         <form id="loginForm">
             <input type="email" id="adminEmail" placeholder="Admin Email" required>
@@ -31,24 +86,53 @@
         </form>
         <p id="message"></p>
     </div>
-    <table id="dataTable">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Occupation</th>
-                <th>Location</th>
-                <th>Education</th>
-                <th>Enquiry Date</th>
-                <th>Referral</th>
-                <th>Info</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody id="studentData"></tbody>
-    </table>
+
+    <div id="dashboardSection">
+        
+        <div id="searchSection">
+            <h2 style="color: #f28c38; margin: 0;">Student Records</h2>
+            <div class="search-controls">
+                <select id="searchColumn">
+                    <option value="">Select Column</option>
+                    <option value="name">Name</option>
+                    <option value="email">Email</option>
+                    <option value="phone">Phone</option>
+                    <option value="occupation">Occupation</option>
+                    <option value="location">Location</option>
+                    <option value="education">Education</option>
+                    <option value="referral">Referral</option>
+                    <option value="info">Info</option>
+                    <option value="status">Status</option>
+                </select>
+                <input type="text" id="searchValue" placeholder="Enter search value">
+                <button id="filterBtn" onclick="filterData()">Filter</button>
+                <button id="resetBtn" onclick="resetFilter()">Reset</button>
+                <button id="logoutBtn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        
+        <p id="dashboardMessage"></p>
+        
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Occupation</th>
+                    <th>Location</th>
+                    <th>Education</th>
+                    <th>Enquiry Date</th>
+                    <th>Referral</th>
+                    <th>Info</th>
+                    <th>Course</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="studentData"></tbody>
+        </table>
+    </div>
 
     <script>
         // Initialize Supabase client
@@ -61,7 +145,7 @@
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('dataTable').style.display = 'table';
+                document.getElementById('dashboardSection').style.display = 'block';
                 loadStudentData();
             }
         }
@@ -80,7 +164,7 @@
                 if (error) throw error;
 
                 document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('dataTable').style.display = 'table';
+                document.getElementById('dashboardSection').style.display = 'block';
                 loadStudentData();
             } catch (error) {
                 messageEl.textContent = 'Error: ' + error.message;
@@ -88,45 +172,108 @@
             }
         });
 
-        // Load student data
-        async function loadStudentData() {
+        // Logout function
+        async function logout() {
+            await supabase.auth.signOut();
+            document.getElementById('loginSection').style.display = 'flex';
+            document.getElementById('dashboardSection').style.display = 'none';
+            document.getElementById('studentData').innerHTML = '';
+        }
+
+        // Load student data (default or filtered)
+        async function loadStudentData(filterColumn = null, filterValue = null) {
             try {
-                const { data, error } = await supabase
+                let query = supabase
                     .from('students')
-                    .select('*')
-                    .order('id', { ascending: false });
+                    .select('*');
+
+                // Apply filter if provided
+                if (filterColumn && filterValue) {
+                    query = query.ilike(filterColumn, `%${filterValue}%`);
+                }
+
+                const { data, error } = await query.order('id', { ascending: false });
+                
                 if (error) throw error;
 
-                const tbody = document.getElementById('studentData');
-                tbody.innerHTML = '';
-                data.forEach(student => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${student.id}</td>
-                        <td>${student.name}</td>
-                        <td>${student.email}</td>
-                        <td>${student.phone}</td>
-                        <td>${student.occupation}</td>
-                        <td>${student.location}</td>
-                        <td>${student.education}</td>
-                        <td>${new Date(student.created_at).toLocaleDateString('en-GB')}</td>
-                        <td>${student.referral}</td>
-                        <td>${student.info}</td>
-                        <td>
-                            <select onchange="updateStatus(${student.id}, this.value)">
-                                <option value="Pending" ${student.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                                <option value="Called" ${student.status === 'Called' ? 'selected' : ''}>Called</option>
-                                <option value="Accepted" ${student.status === 'Accepted' ? 'selected' : ''}>Accepted</option>
-                                <option value="Cancelled" ${student.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
-                            </select>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
+                displayData(data);
+                
+                const messageEl = document.getElementById('dashboardMessage');
+                if (filterColumn && filterValue) {
+                    messageEl.textContent = `Showing ${data.length} result(s) for "${filterValue}" in ${filterColumn}`;
+                    messageEl.className = 'info';
+                } else {
+                    messageEl.textContent = `Showing all ${data.length} record(s)`;
+                    messageEl.className = '';
+                }
             } catch (error) {
-                document.getElementById('message').textContent = 'Error: ' + error.message;
-                document.getElementById('message').classList.add('error');
+                document.getElementById('dashboardMessage').textContent = 'Error: ' + error.message;
+                document.getElementById('dashboardMessage').classList.add('error');
             }
+        }
+
+        // Display data in table
+        function displayData(data) {
+            const tbody = document.getElementById('studentData');
+            tbody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 20px;">No records found</td></tr>';
+                return;
+            }
+
+            data.forEach((student, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${student.name}</td>
+                    <td>${student.email}</td>
+                    <td>${student.phone}</td>
+                    <td>${student.occupation}</td>
+                    <td>${student.location}</td>
+                    <td>${student.education}</td>
+                    <td>${new Date(student.created_at).toLocaleDateString('en-GB')}</td>
+                    <td>${student.referral}</td>
+                    <td>${student.info}</td>
+                    <td>${student.course}</td>
+                    <td>
+                        <select onchange="updateStatus(${student.id}, this.value)">
+                            <option value="Pending" ${student.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                            <option value="Called" ${student.status === 'Called' ? 'selected' : ''}>Called</option>
+                            <option value="Accepted" ${student.status === 'Accepted' ? 'selected' : ''}>Accepted</option>
+                            <option value="Cancelled" ${student.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Filter data based on search criteria
+        function filterData() {
+            const column = document.getElementById('searchColumn').value;
+            const value = document.getElementById('searchValue').value.trim();
+            
+            if (!column) {
+                document.getElementById('dashboardMessage').textContent = 'Please select a column to search';
+                document.getElementById('dashboardMessage').className = 'error';
+                return;
+            }
+            
+            if (!value) {
+                document.getElementById('dashboardMessage').textContent = 'Please enter a search value';
+                document.getElementById('dashboardMessage').className = 'error';
+                return;
+            }
+            
+            loadStudentData(column, value);
+        }
+
+        // Reset filter and show all data
+        function resetFilter() {
+            document.getElementById('searchColumn').value = '';
+            document.getElementById('searchValue').value = '';
+            loadStudentData();
         }
 
         // Update student status
@@ -137,15 +284,29 @@
                     .update({ status: newStatus })
                     .eq('id', studentId);
                 if (error) throw error;
-                document.getElementById('message').textContent = 'Status updated successfully!';
+                
+                const messageEl = document.getElementById('dashboardMessage');
+                messageEl.textContent = 'Status updated successfully!';
+                messageEl.className = '';
+                
+                setTimeout(() => {
+                    messageEl.textContent = '';
+                }, 3000);
             } catch (error) {
-                document.getElementById('message').textContent = 'Error: ' + error.message;
-                document.getElementById('message').classList.add('error');
+                document.getElementById('dashboardMessage').textContent = 'Error: ' + error.message;
+                document.getElementById('dashboardMessage').classList.add('error');
             }
         }
+
+        // Enable Enter key for filtering
+        document.getElementById('searchValue').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                filterData();
+            }
+        });
 
         // Check auth on page load
         checkAuth();
     </script>
 </body>
-</html>
+</html> 

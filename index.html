@@ -100,7 +100,7 @@
     <form id="studentForm">
         <input type="text" id="name" placeholder="Full Name" required>
         <input type="email" id="email" placeholder="Email" required>
-        <input type="tel" id="phone" placeholder="Phone Number" required>
+        <input type="tel" id="phone" placeholder="Phone Number (e.g., 9876543219)" required>
         <select id="occupation" required>
             <option value="" disabled selected>Select Occupation</option>
             <option value="Student">Student</option>
@@ -121,11 +121,17 @@
             <option value="Currently studying at Login360">Currently studying at Login360</option>
             <option value="Former student of Login360">Former student of Login360</option>
         </select>
+        <select id="course">
+            <option value="" disabled selected>Select the Course</option>
+            <option value="Data Analytics">Data Analytics</option>
+            <option value="Python">Python</option>
+        </select>
         <button type="submit">Submit</button>
     </form>
     <p id="message"></p>
     <div class="links">
         <a href="admin.html">Admin</a>
+        <a href="login.html">Already Registered</a>
         <!-- <a href="welcome.html">Welcome</a> -->
     </div>
 
@@ -138,31 +144,86 @@
         // Form submission
         document.getElementById('studentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
             const messageEl = document.getElementById('message');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            
+            // Clear previous messages
             messageEl.textContent = '';
+            messageEl.className = '';
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Checking...';
 
-            const data = {
-                name: document.getElementById('name').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                occupation: document.getElementById('occupation').value,
-                location: document.getElementById('location').value,
-                education: document.getElementById('education').value,
-                referral: document.getElementById('referral').value,
-                info: document.getElementById('info').value,
-                status: 'Pending'
-            };
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
 
             try {
+                // Check if email already exists
+                const { data: emailCheck, error: emailError } = await supabase
+                    .from('students')
+                    .select('email')
+                    .eq('email', email)
+                    .limit(1);
+
+                if (emailError) throw emailError;
+
+                if (emailCheck && emailCheck.length > 0) {
+                    messageEl.textContent = 'This email is already registered. Please use a different email.';
+                    messageEl.classList.add('error');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit';
+                    return;
+                }
+
+                // Check if phone number already exists
+                const { data: phoneCheck, error: phoneError } = await supabase
+                    .from('students')
+                    .select('phone')
+                    .eq('phone', phone)
+                    .limit(1);
+
+                if (phoneError) throw phoneError;
+
+                if (phoneCheck && phoneCheck.length > 0) {
+                    messageEl.textContent = 'This phone number is already registered. Please use a different phone number.';
+                    messageEl.classList.add('error');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit';
+                    return;
+                }
+
+                // If no duplicates found, proceed with insertion
+                submitBtn.textContent = 'Submitting...';
+
+                const data = {
+                    name: document.getElementById('name').value,
+                    email: email,
+                    phone: phone,
+                    occupation: document.getElementById('occupation').value,
+                    location: document.getElementById('location').value,
+                    education: document.getElementById('education').value,
+                    referral: document.getElementById('referral').value,
+                    info: document.getElementById('info').value,
+                    course: document.getElementById('course').value,
+                    status: 'Pending'
+                };
+
                 const { error } = await supabase
                     .from('students')
                     .insert([data]);
 
                 if (error) throw error;
+
+                // Success - redirect to welcome page
                 window.location.href = 'welcome.html';
+
             } catch (error) {
                 messageEl.textContent = 'Error: ' + error.message;
                 messageEl.classList.add('error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit';
             }
         });
     </script>
